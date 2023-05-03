@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   lesson3.c                                          :+:      :+:    :+:   */
+/*   lesson4.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/05/03 16:39:32 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/03 17:36:11 by gialexan         ###   ########.fr       */
+/*   Created: 2023/05/03 17:17:12 by gialexan          #+#    #+#             */
+/*   Updated: 2023/05/03 17:48:42 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,29 +16,39 @@
 #include <pthread.h>
 
 /*
- * Condição de corrida (Race Condition) entre threads.
- * 
- * Condição de corrida (Race Condition) é um problema que ocorre quando duas ou mais threads
- * acessam simultaneamente o mesmo espaço de memória compartilhado, podendo levar a resultados 
- * inesperados ou até mesmo corromper os dados. Isso acontece quando a sincronização das threads 
- * não é tratada adequadamente e cada thread executa de forma independente, sem levar em consideração 
- * a execução de outras threads no mesmo espaço de memória.
+ * Introdução a mutex
+ *
+ * Mutex (ou "mutual exclusion") é uma técnica utilizada em programação concorrente 
+ * para garantir a exclusividade de acesso a um recurso compartilhado entre threads. 
+ * É uma forma de prevenir condições de corrida (race conditions) que podem ocorrer quando 
+ * duas ou mais threads tentam acessar o mesmo recurso simultaneamente, podendo levar a resultados 
+ * inesperados ou erros no programa.
 */
 
 int counter = 0;
+// Struct mutex.
+pthread_mutex_t mutex;
 
 void    *routine(void *arg)
 {
     // Condição de corrida
     for (int i = 0; i < 1000000; i++)
+    {
+        // Bloquear o acesso a variável
+        pthread_mutex_lock(&mutex);
         counter++;
+        // Desbloquear o acesso a variável
+        pthread_mutex_unlock(&mutex);
+    }
 }
 
 int main(void)
 {
     // Struct pthreads
     pthread_t t1, t2;
-    
+    // Init mutex
+    pthread_mutex_init(&mutex, NULL);
+
     // Criar threads
     pthread_create(&t1, NULL, &routine, NULL);
     pthread_create(&t2, NULL, &routine, NULL);

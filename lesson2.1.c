@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/02 14:59:06 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/02 19:39:19 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/03 17:37:40 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,9 @@
  * condições de corrida e outros problemas de concorrência.
 */
 
-/* Threads
-
-// Variável global.
 int x = 5;
+
+/* Threads
 
 void    *routine(void *arg)
 {
@@ -69,6 +68,7 @@ int main(void)
 */
 
 /* Processos
+
 int main(void)
 {
     int y;

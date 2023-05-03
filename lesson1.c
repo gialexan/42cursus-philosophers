@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/28 09:03:51 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/02 15:55:44 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/03 17:19:00 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <pthread.h>
 
 /*
+ * Introdução a threads.
+ * 
  * Criar e testar threads.
 */
 
