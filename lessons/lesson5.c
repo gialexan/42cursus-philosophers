@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 19:18:12 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/04 22:58:51 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/05 10:33:24 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ void    *roll_dice(void *arg)
     value = (rand() % 6) + 1;
     result = malloc(sizeof(int));
     
+    // Salva valor da variável value no ponteiro.
     *result = value;
     printf("-> Valor pseudoaleatório: %d\n", value);
     printf("-> Valor colocado no ptr result: %d / localização memória do ptr: %p\n", *result, result);
