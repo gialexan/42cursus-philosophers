@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 16:39:32 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/03 17:36:11 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/04 22:58:40 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ int main(void)
     // Aguardar as thread finalizarem
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
+
     printf("Value of counter: %d\n", counter);
     return (0);
 }

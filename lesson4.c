@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 17:17:12 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/04 21:54:27 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/04 22:58:43 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ int main(void)
 {
     // Struct pthreads
     pthread_t t1, t2;
+
     // Init mutex
     pthread_mutex_init(&mutex, NULL);
 
@@ -56,7 +57,10 @@ int main(void)
     // Aguardar as thread finalizarem
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
+
+    // Destruir mutex
     pthread_mutex_destroy(&mutex);
+
     printf("Value of counter: %d\n", counter);
     return (0);
 }

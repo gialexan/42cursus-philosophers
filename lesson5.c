@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/03 19:18:12 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/04 22:40:27 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/04 22:58:51 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,8 @@ int main(void)
 {
     // Struct pthreads
     pthread_t t1;
+    
+    // Variável que vai armazenar resultado da thread.
     int *result;
 
     // srand() é usado para inicializar o gerador de números pseudoaleatórios
@@ -50,6 +52,7 @@ int main(void)
     // Aguardar as thread finalizarem
     // Segundo parêmetro é variável que foi apontar para resultado da thread.
     pthread_join(t1, (void **)&result);
+
     printf("<- Valor colocado no ptr result: %d / localização memória do ptr %p\n", *result, result);
     free(result);
     return (0);

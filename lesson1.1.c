@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 22:05:57 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/04 22:06:04 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/04 22:56:43 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ int main(void)
 {
     // Struct pthreads
     pthread_t th[5];
+
     // Iniciar mutex
     pthread_mutex_init(&mutex, NULL);
 
@@ -55,7 +56,9 @@ int main(void)
         pthread_join(th[i], NULL);
         printf("Thread %d encerrou execução\n", i);
     }
+    // Destruir mutex
     pthread_mutex_destroy(&mutex);
+
     printf("Value of counter: %d\n", counter);
     return (0);
 }
