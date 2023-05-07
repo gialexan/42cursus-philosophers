@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/05 17:29:05 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/05 19:14:31 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,12 @@ t_philo *create_philoshopers(t_context *ctx)
     t_philo *philos;
 
     i = -1;
-    philos =  malloc(ctx->num_of_philo * sizeof(t_philo));
+    philos = malloc(ctx->num_of_philo * sizeof(t_philo));
     while (++i <= ctx->num_of_philo)
     {
         philos[i].test = i + 1;
-        printf("coloquei %d\n", i);
+        philos[i].fork_right;
+        printf("coloquei %d\n", i + 1);
     }
     return (philos);
 }
