@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:36 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/09 15:15:19 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 10:16:49 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 # define PHILO_H
 
 #include <time.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/time.h>
@@ -38,10 +38,12 @@ typedef struct s_philo
     t_fork      *fork_first;
     t_fork      *fork_second;
     t_status    philo_action;
+    int         last_dinner;
 }   t_philo;
 
 typedef struct s_context
 {
+    t_fork  lock_msg;
     t_time  start_time;
     int     num_of_philo;
     int     time_to_eat;
