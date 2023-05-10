@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 15:50:34 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 17:41:48 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,20 +33,29 @@ t_context   **get_ctx_ref(void)
     return (&ctx);
 }
 
-int get_current_time(t_context *ctx)
+int get_curr_time(void)
 {
-    t_time      end_time;
-    int         current_time;
+	struct timeval	tp;
 
-    gettimeofday(&end_time, NULL);
-    current_time = end_time.tv_sec - ctx->start_time.tv_sec;
-    return (current_time);
+	gettimeofday(&tp, NULL);
+	return ((tp.tv_sec * 1000) + (tp.tv_usec / 1000));
 }
+
+size_t get_ms_time(void)
+{
+    t_context   *ctx;
+    size_t      curr_time;
+
+    ctx = *get_ctx_ref();
+    curr_time = get_curr_time();
+    return (curr_time - ctx->start_time);
+}
+
 
 void    show_msg(t_context *ctx, t_philo *philo, char *status)
 {
     pthread_mutex_lock(&ctx->lock_msg);
-    printf("%d Philosopher %s is %s\n", get_current_time(ctx), philo->name, status);
+    printf("%.3ld Philosopher %s is %s\n", get_ms_time(), philo->name, status);
     pthread_mutex_unlock(&ctx->lock_msg);
 }
 
@@ -72,7 +81,8 @@ t_philo *create_philos(t_context *ctx, t_fork *forks)
     {
         philos[i].id = -1;
         philos[i].name = names[i];
-        philos[i].last_dinner = -1;
+        philos[i].last_meal = -1;
+        philos[i].philo_action = -1;
         philos[i].fork_first = &forks[ft_min(i, (i + 1) % ctx->num_of_philo)];
         philos[i].fork_second = &forks[ft_max(i, (i + 1) % ctx->num_of_philo)];
     }
@@ -84,13 +94,13 @@ t_context   init_context(char **argv)
     t_context   ctx;
 
     (void)argv;
+    ctx.start_time = get_curr_time();
     ctx.num_of_philo = 2;
     ctx.time_to_die = 3;
     ctx.time_to_eat = 200;
     ctx.time_to_sleep = 100;
     ctx.num_of_time_eat = 3;
     pthread_mutex_init(&ctx.lock_msg, NULL);
-    gettimeofday(&ctx.start_time, NULL);
     return (ctx);
 }
 
@@ -113,11 +123,11 @@ void    dinner_action(t_context *ctx, t_philo *philo)
     pthread_mutex_lock(philo->fork_first);
     pthread_mutex_lock(philo->fork_second);
 
-    show_msg(ctx, philo, EATING);
+    show_msg(ctx, philo, EAT);
 
-    philo->last_dinner = get_current_time(ctx);
+    philo->last_meal = get_curr_time();
 
-    sleep(2);
+    usleep(200);
 
     pthread_mutex_unlock(philo->fork_first);
     pthread_mutex_unlock(philo->fork_second);
@@ -125,30 +135,25 @@ void    dinner_action(t_context *ctx, t_philo *philo)
 
 void    sleep_action(t_context *ctx, t_philo *philo)
 {
-    show_msg(ctx, philo, SLEEPING);
-    sleep(1);
+    show_msg(ctx, philo, SLEEP);
+    usleep(100);
 }
 
 void    think_action(t_context *ctx, t_philo *philo)
 {
-    show_msg(ctx, philo, THINKING);
-    sleep(1);
+    show_msg(ctx, philo, THINK);
+    usleep(100);
 }
 
 void    *philos_routine(void *philo)
 {
     int         i;
     t_context   *ctx;
-    t_philo     *test;
 
     i = -1;
-    test = philo;
     ctx = *get_ctx_ref();
     while (++i < ctx->num_of_time_eat)
     {
-        if ((get_current_time(ctx) - test->last_dinner) >= ctx->time_to_die)
-            printf("----> Philo: %s Morreu.\n", test->name);
-        //AKI COLOCAR PHILO SE MATAR.
         dinner_action(ctx, philo);
         sleep_action(ctx, philo);
         think_action(ctx, philo);
@@ -178,7 +183,6 @@ void    *watcher_routine(void *args)
     (void)philos;
     while (++i < ctx->num_of_philo)
     {
-        
         //printf("---> Current time: %d\n", get_current_time(ctx));
 
         //printf("---> Last dinner: %d\n", philos[i].last_dinner);
