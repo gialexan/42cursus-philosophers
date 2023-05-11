@@ -6,11 +6,12 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 21:07:55 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 23:10:49 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
 size_t timestamp_in_ms(void);
 
 int    mssleep(size_t ms)
@@ -52,7 +53,7 @@ size_t timestamp_in_ms(void)
 	return ((tp.tv_sec * 1000) + (tp.tv_usec / 1000));
 }
 
-size_t    state_log(t_context *ctx, t_philo *philo, char *status)
+void    state_log(t_context *ctx, t_philo *philo, char *status)
 {
     size_t  current;
     size_t  elapsed;
@@ -64,13 +65,12 @@ size_t    state_log(t_context *ctx, t_philo *philo, char *status)
     printf("%ld Philosopher %d is %s\n", elapsed, philo->name, status);
 
     pthread_mutex_unlock(&ctx->lock_log);
-    return (current);
 }
 
 void    save_ctx_ref(t_context *ctx)
 {
     t_context   **save_ctx;
-    
+
     save_ctx = get_ctx_ref();
     *save_ctx = ctx;
 }
@@ -89,6 +89,7 @@ t_philo *create_philos(t_context *ctx, t_mutex *forks)
         philos[i].id = -1;
         philos[i].name = i;
         philos[i].action = -1;
+        philos[i].meals = -1;
         philos[i].last_meal = -1;
         philos[i].fork_first = &forks[ft_min(i, (i + 1) % ctx->num_of_philo)];
         philos[i].fork_second = &forks[ft_max(i, (i + 1) % ctx->num_of_philo)];
@@ -108,6 +109,7 @@ t_context   init_context(char **argv)
     ctx.time_to_sleep = 100;
     ctx.num_of_time_eat = 3;
     pthread_mutex_init(&ctx.lock_log, NULL);
+    pthread_mutex_init(&ctx.lock_eat, NULL);
     return (ctx);
 }
 
@@ -129,8 +131,11 @@ void    dinner_action(t_context *ctx, t_philo *philo)
 {
     pthread_mutex_lock(philo->fork_first);
     pthread_mutex_lock(philo->fork_second);
-
-    philo->last_meal = state_log(ctx, philo, EAT);
+    philo->meals++;  
+    
+    pthread_mutex_lock(&ctx->lock_eat);
+    philo->last_meal = timestamp_in_ms();
+    pthread_mutex_unlock(&ctx->lock_eat);
 
     mssleep(ctx->time_to_eat);
 

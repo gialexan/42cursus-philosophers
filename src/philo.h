@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:36 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 21:08:29 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 22:54:03 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ typedef struct s_philo
 {
     pthread_t   id;
     int         name;
+    int         meals;
     t_status    action;
     size_t      last_meal;
     t_mutex     *fork_first;
@@ -47,7 +48,8 @@ typedef struct s_philo
 
 typedef struct s_context
 {
-    t_mutex  lock_log;
+    t_mutex lock_log;
+    t_mutex lock_eat;
     size_t  start_time;
     int     num_of_philo;
     int     time_to_eat;
