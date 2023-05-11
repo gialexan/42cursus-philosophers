@@ -6,13 +6,15 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 23:10:49 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/11 18:03:38 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
 size_t timestamp_in_ms(void);
+
+t_bool stop_dinner(t_context *ctx, t_philo *philo);
 
 int    mssleep(size_t ms)
 {
@@ -62,7 +64,7 @@ void    state_log(t_context *ctx, t_philo *philo, char *status)
 
     current = timestamp_in_ms();
     elapsed = current - ctx->start_time;
-    printf("%ld Philosopher %d is %s\n", elapsed, philo->name, status);
+    printf("%5ld Philosopher %2d %s\n", elapsed, philo->name, status);
 
     pthread_mutex_unlock(&ctx->lock_log);
 }
@@ -88,9 +90,8 @@ t_philo *create_philos(t_context *ctx, t_mutex *forks)
     {
         philos[i].id = -1;
         philos[i].name = i;
-        philos[i].action = -1;
-        philos[i].meals = -1;
-        philos[i].last_meal = -1;
+        philos[i].meals = 0;
+        philos[i].last_meal = ctx->start_time;
         philos[i].fork_first = &forks[ft_min(i, (i + 1) % ctx->num_of_philo)];
         philos[i].fork_second = &forks[ft_max(i, (i + 1) % ctx->num_of_philo)];
     }
@@ -103,13 +104,15 @@ t_context   init_context(char **argv)
 
     (void)argv;
     ctx.start_time = timestamp_in_ms();
-    ctx.num_of_philo = 2;
-    ctx.time_to_die = 400;
+    ctx.num_of_philo = 4;
+    ctx.time_to_die = 310;
     ctx.time_to_eat = 200;
     ctx.time_to_sleep = 100;
-    ctx.num_of_time_eat = 3;
+    ctx.num_of_time_eat = -1;
+    ctx.philo_death = FALSE;
     pthread_mutex_init(&ctx.lock_log, NULL);
     pthread_mutex_init(&ctx.lock_eat, NULL);
+    pthread_mutex_init(&ctx.lock_death, NULL);
     return (ctx);
 }
 
@@ -122,7 +125,7 @@ t_mutex  *create_forks(t_context *ctx)
     forks = malloc(ctx->num_of_philo * sizeof(t_mutex));
     if (!forks)
         return (NULL);
-    while(++i < ctx->num_of_philo)
+    while (++i < ctx->num_of_philo)
         pthread_mutex_init(&forks[i], NULL);
     return (forks);
 }
@@ -131,39 +134,64 @@ void    dinner_action(t_context *ctx, t_philo *philo)
 {
     pthread_mutex_lock(philo->fork_first);
     pthread_mutex_lock(philo->fork_second);
-    philo->meals++;  
-    
+    if (stop_dinner(ctx, philo) == TRUE)
+    {
+        pthread_mutex_unlock(philo->fork_first);
+        pthread_mutex_unlock(philo->fork_second);
+        return ;
+    }
+
+    state_log(ctx, philo, TAKE_FORK);
+    state_log(ctx, philo, EAT);
+
     pthread_mutex_lock(&ctx->lock_eat);
+    philo->meals++;
     philo->last_meal = timestamp_in_ms();
     pthread_mutex_unlock(&ctx->lock_eat);
 
     mssleep(ctx->time_to_eat);
-
     pthread_mutex_unlock(philo->fork_first);
     pthread_mutex_unlock(philo->fork_second);
 }
 
 void    sleep_action(t_context *ctx, t_philo *philo)
 {
+    if (stop_dinner(ctx, philo) == TRUE)
+        return ;
     state_log(ctx, philo, SLEEP);
-    philo->action = SLEEPING;
     mssleep(ctx->time_to_sleep);
 }
 
 void    think_action(t_context *ctx, t_philo *philo)
 {
+    if (stop_dinner(ctx, philo) == TRUE)
+        return ;
     state_log(ctx, philo, THINK);
-    philo->action = THINKING;
+}
+
+t_bool stop_dinner(t_context *ctx, t_philo *philo)
+{
+    t_bool stop_dinner;
+
+    stop_dinner = FALSE;
+    pthread_mutex_lock(&ctx->lock_eat);
+    if (philo->meals == ctx->num_of_time_eat)
+        stop_dinner = TRUE;
+    pthread_mutex_unlock(&ctx->lock_eat);
+
+    pthread_mutex_lock(&ctx->lock_death);
+    if (ctx->philo_death == TRUE)
+        stop_dinner = TRUE;
+    pthread_mutex_unlock(&ctx->lock_death);
+    return (stop_dinner);
 }
 
 void    *philos_routine(void *philo)
 {
-    int         i;
     t_context   *ctx;
 
-    i = -1;
     ctx = *get_ctx_ref();
-    while(++i < ctx->num_of_time_eat)
+    while(stop_dinner(ctx, philo) != TRUE)
     {
         dinner_action(ctx, philo);
         sleep_action(ctx, philo);
@@ -182,38 +210,62 @@ void    begin_dinner(t_context *ctx, t_philo *philos)
         pthread_create(&philos[i].id, NULL, &philos_routine, &philos[i]);
 }
 
-int main(int argc, char **argv)
+t_bool all_satisfied(t_context *ctx, t_philo *philos)
 {
-    t_context   ctx;
-    t_mutex     *forks;
-    t_philo     *philos;
-    pthread_t   watcher;
+    t_bool satisfied;
 
-    (void)argc;
-    ctx = init_context(argv);
-    forks = create_forks(&ctx);
-    philos = create_philos(&ctx, forks);
-    //watcher = create_watcher(philos);
-    begin_dinner(&ctx, philos);
-    for(int i = 0; i < ctx.num_of_philo; i++)
-        pthread_join(philos[i].id, NULL);
-    //pthread_join(watcher, NULL);
+    satisfied = FALSE;
+    pthread_mutex_lock(&ctx->lock_eat);
+    if (philos[0].meals == ctx->num_of_time_eat)
+        satisfied = TRUE;
+    pthread_mutex_unlock(&ctx->lock_eat);
+    return (satisfied);
 }
 
-/*
-void    *watcher_routine(void *args)
+t_bool starved_death(t_context *ctx, t_philo *philo)
 {
-    int         i;
-    t_context   *ctx;
-    t_philo     *philos;
-    
+    size_t last_meal;
+
+    pthread_mutex_lock(&ctx->lock_eat);
+    last_meal = timestamp_in_ms() - philo->last_meal;
+    pthread_mutex_unlock(&ctx->lock_eat);
+    return (last_meal > ctx->time_to_die);
+}
+
+void    throw_death(t_context *ctx, t_philo *philo)
+{
+    pthread_mutex_lock(&ctx->lock_death);
+    ctx->philo_death = TRUE;
+    pthread_mutex_unlock(&ctx->lock_death);
+    state_log(ctx, philo, DEATH);
+}
+
+t_bool  all_alive(t_context *ctx, t_philo *philos)
+{
+    int i;
+
     i = -1;
-    philos = args;
-    ctx = *get_ctx_ref();
-    (void)philos;
     while (++i < ctx->num_of_philo)
     {
-        
+        if (starved_death(ctx, &philos[i]))
+            return (FALSE);
+    }
+    return (TRUE);
+}
+
+void    *watcher_routine(void *philos)
+{
+    t_context   *ctx;
+
+    ctx = *get_ctx_ref();
+    while (all_satisfied(ctx, philos) != TRUE)
+    {
+        if (all_alive(ctx, philos) != TRUE)
+        {
+            throw_death(ctx, philos);
+            return (NULL);
+        }
+        usleep(1000);
     }
     return (NULL);
 }
@@ -225,4 +277,24 @@ pthread_t    create_watcher(t_philo *philos)
     pthread_create(&watcher, NULL, &watcher_routine, philos);
     return (watcher);
 }
-*/
+
+int main(int argc, char **argv)
+{
+    t_context   ctx;
+    t_mutex     *forks;
+    t_philo     *philos;
+    pthread_t   watcher;
+
+    (void)argc;
+    ctx = init_context(argv);
+    forks = create_forks(&ctx);
+    philos = create_philos(&ctx, forks);
+    begin_dinner(&ctx, philos);
+    watcher = create_watcher(philos);
+    for(int i = 0; i < ctx.num_of_philo; i++){
+        pthread_join(philos[i].id, NULL);
+    }
+    pthread_join(watcher, NULL);
+    free(philos);
+    free(forks);
+}

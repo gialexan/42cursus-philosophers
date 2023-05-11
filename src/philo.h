@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:36 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 22:54:03 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/11 18:01:31 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,26 +21,25 @@
 # include <pthread.h>
 # include <sys/time.h>
 
-# define EAT "eating"
-# define THINK "thinking"
-# define SLEEP "sleeping"
+# define TAKE_FORK "has take a fork ⚡️"
+# define EAT "is eating 🍕"
+# define THINK "is thinking 🤔"
+# define SLEEP "is sleeping 😴"
+# define DEATH "is death 💀"
 
 typedef pthread_mutex_t t_mutex;
 
-typedef enum s_status
+typedef enum e_bool
 {
-    DEAD,
-    EATING,
-    THINKING,
-    SLEEPING,
-}   t_status;
+	FALSE,
+	TRUE,
+}	t_bool;
 
 typedef struct s_philo
 {
     pthread_t   id;
     int         name;
     int         meals;
-    t_status    action;
     size_t      last_meal;
     t_mutex     *fork_first;
     t_mutex     *fork_second;
@@ -50,7 +49,9 @@ typedef struct s_context
 {
     t_mutex lock_log;
     t_mutex lock_eat;
+    t_mutex lock_death;
     size_t  start_time;
+    t_bool  philo_death;
     int     num_of_philo;
     int     time_to_eat;
     int     time_to_die;
