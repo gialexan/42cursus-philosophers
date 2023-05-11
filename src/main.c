@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/11 18:03:38 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/11 18:05:37 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -291,6 +291,7 @@ int main(int argc, char **argv)
     philos = create_philos(&ctx, forks);
     begin_dinner(&ctx, philos);
     watcher = create_watcher(philos);
+    //colocar em loop while.
     for(int i = 0; i < ctx.num_of_philo; i++){
         pthread_join(philos[i].id, NULL);
     }
