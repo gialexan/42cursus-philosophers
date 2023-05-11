@@ -6,11 +6,22 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:24 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 17:41:48 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 21:07:55 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+size_t timestamp_in_ms(void);
+
+int    mssleep(size_t ms)
+{
+    size_t    start;
+
+    start = timestamp_in_ms();
+    while (ms > timestamp_in_ms() - start)
+        usleep(100);
+    return (0);
+}
 
 int ft_min(int a, int b)
 {
@@ -33,7 +44,7 @@ t_context   **get_ctx_ref(void)
     return (&ctx);
 }
 
-int get_curr_time(void)
+size_t timestamp_in_ms(void)
 {
 	struct timeval	tp;
 
@@ -41,22 +52,19 @@ int get_curr_time(void)
 	return ((tp.tv_sec * 1000) + (tp.tv_usec / 1000));
 }
 
-size_t get_ms_time(void)
+size_t    state_log(t_context *ctx, t_philo *philo, char *status)
 {
-    t_context   *ctx;
-    size_t      curr_time;
+    size_t  current;
+    size_t  elapsed;
 
-    ctx = *get_ctx_ref();
-    curr_time = get_curr_time();
-    return (curr_time - ctx->start_time);
-}
+    pthread_mutex_lock(&ctx->lock_log);
 
+    current = timestamp_in_ms();
+    elapsed = current - ctx->start_time;
+    printf("%ld Philosopher %d is %s\n", elapsed, philo->name, status);
 
-void    show_msg(t_context *ctx, t_philo *philo, char *status)
-{
-    pthread_mutex_lock(&ctx->lock_msg);
-    printf("%.3ld Philosopher %s is %s\n", get_ms_time(), philo->name, status);
-    pthread_mutex_unlock(&ctx->lock_msg);
+    pthread_mutex_unlock(&ctx->lock_log);
+    return (current);
 }
 
 void    save_ctx_ref(t_context *ctx)
@@ -67,11 +75,10 @@ void    save_ctx_ref(t_context *ctx)
     *save_ctx = ctx;
 }
 
-t_philo *create_philos(t_context *ctx, t_fork *forks)
+t_philo *create_philos(t_context *ctx, t_mutex *forks)
 {
     int         i;
     t_philo     *philos;
-    const char  *names[] = {"Aristóteles", "Sócrates", "Platão", "Gialexan", "Shelson", "Marcelo", "Ygor"};
 
     i = -1;
     philos = malloc(ctx->num_of_philo * sizeof(t_philo));
@@ -80,9 +87,9 @@ t_philo *create_philos(t_context *ctx, t_fork *forks)
     while(++i < ctx->num_of_philo)
     {
         philos[i].id = -1;
-        philos[i].name = names[i];
+        philos[i].name = i;
+        philos[i].action = -1;
         philos[i].last_meal = -1;
-        philos[i].philo_action = -1;
         philos[i].fork_first = &forks[ft_min(i, (i + 1) % ctx->num_of_philo)];
         philos[i].fork_second = &forks[ft_max(i, (i + 1) % ctx->num_of_philo)];
     }
@@ -94,23 +101,23 @@ t_context   init_context(char **argv)
     t_context   ctx;
 
     (void)argv;
-    ctx.start_time = get_curr_time();
+    ctx.start_time = timestamp_in_ms();
     ctx.num_of_philo = 2;
-    ctx.time_to_die = 3;
+    ctx.time_to_die = 400;
     ctx.time_to_eat = 200;
     ctx.time_to_sleep = 100;
     ctx.num_of_time_eat = 3;
-    pthread_mutex_init(&ctx.lock_msg, NULL);
+    pthread_mutex_init(&ctx.lock_log, NULL);
     return (ctx);
 }
 
-t_fork  *create_forks(t_context *ctx)
+t_mutex  *create_forks(t_context *ctx)
 {
     int     i;
-    t_fork  *forks;
+    t_mutex  *forks;
 
     i = -1;
-    forks = malloc(ctx->num_of_philo * sizeof(t_fork));
+    forks = malloc(ctx->num_of_philo * sizeof(t_mutex));
     if (!forks)
         return (NULL);
     while(++i < ctx->num_of_philo)
@@ -123,11 +130,9 @@ void    dinner_action(t_context *ctx, t_philo *philo)
     pthread_mutex_lock(philo->fork_first);
     pthread_mutex_lock(philo->fork_second);
 
-    show_msg(ctx, philo, EAT);
+    philo->last_meal = state_log(ctx, philo, EAT);
 
-    philo->last_meal = get_curr_time();
-
-    usleep(200);
+    mssleep(ctx->time_to_eat);
 
     pthread_mutex_unlock(philo->fork_first);
     pthread_mutex_unlock(philo->fork_second);
@@ -135,14 +140,15 @@ void    dinner_action(t_context *ctx, t_philo *philo)
 
 void    sleep_action(t_context *ctx, t_philo *philo)
 {
-    show_msg(ctx, philo, SLEEP);
-    usleep(100);
+    state_log(ctx, philo, SLEEP);
+    philo->action = SLEEPING;
+    mssleep(ctx->time_to_sleep);
 }
 
 void    think_action(t_context *ctx, t_philo *philo)
 {
-    show_msg(ctx, philo, THINK);
-    usleep(100);
+    state_log(ctx, philo, THINK);
+    philo->action = THINKING;
 }
 
 void    *philos_routine(void *philo)
@@ -152,7 +158,7 @@ void    *philos_routine(void *philo)
 
     i = -1;
     ctx = *get_ctx_ref();
-    while (++i < ctx->num_of_time_eat)
+    while(++i < ctx->num_of_time_eat)
     {
         dinner_action(ctx, philo);
         sleep_action(ctx, philo);
@@ -167,10 +173,29 @@ void    begin_dinner(t_context *ctx, t_philo *philos)
 
     i = -1;
     save_ctx_ref(ctx);
-    while (++i < ctx->num_of_philo)
+    while(++i < ctx->num_of_philo)
         pthread_create(&philos[i].id, NULL, &philos_routine, &philos[i]);
 }
 
+int main(int argc, char **argv)
+{
+    t_context   ctx;
+    t_mutex     *forks;
+    t_philo     *philos;
+    pthread_t   watcher;
+
+    (void)argc;
+    ctx = init_context(argv);
+    forks = create_forks(&ctx);
+    philos = create_philos(&ctx, forks);
+    //watcher = create_watcher(philos);
+    begin_dinner(&ctx, philos);
+    for(int i = 0; i < ctx.num_of_philo; i++)
+        pthread_join(philos[i].id, NULL);
+    //pthread_join(watcher, NULL);
+}
+
+/*
 void    *watcher_routine(void *args)
 {
     int         i;
@@ -183,11 +208,7 @@ void    *watcher_routine(void *args)
     (void)philos;
     while (++i < ctx->num_of_philo)
     {
-        //printf("---> Current time: %d\n", get_current_time(ctx));
-
-        //printf("---> Last dinner: %d\n", philos[i].last_dinner);
-
-        //printf("----> test: %d\n", get_current_time(ctx) - philos[i].last_dinner);
+        
     }
     return (NULL);
 }
@@ -199,28 +220,4 @@ pthread_t    create_watcher(t_philo *philos)
     pthread_create(&watcher, NULL, &watcher_routine, philos);
     return (watcher);
 }
-
-int main(int argc, char **argv)
-{
-    t_context   ctx;
-    t_fork      *forks;
-    t_philo     *philos;
-    pthread_t   watcher;
-
-    (void)argc;
-    ctx = init_context(argv);
-    forks = create_forks(&ctx);
-    philos = create_philos(&ctx, forks);
-    watcher = create_watcher(philos);
-    begin_dinner(&ctx, philos);
-    for (int i = 0; i < ctx.num_of_philo; i++)
-        pthread_join(philos[i].id, NULL);
-    pthread_join(watcher, NULL);
-}
-
-/* teste sobre qual garfo está disponível para cada philo.
-
-     int i = -1;
-    while (++i < ctx.num_of_philo)
-        printf("id: %ld / fork_right: %p / fork_left: %p\n", philos[i].id, (void *)philos[i].fork_first, (void *)philos[i].fork_second);
 */

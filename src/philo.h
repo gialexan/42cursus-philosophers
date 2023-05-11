@@ -6,7 +6,7 @@
 /*   By: gialexan <gialexan@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 10:41:36 by gialexan          #+#    #+#             */
-/*   Updated: 2023/05/10 17:23:57 by gialexan         ###   ########.fr       */
+/*   Updated: 2023/05/10 21:08:29 by gialexan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 # define THINK "thinking"
 # define SLEEP "sleeping"
 
-typedef pthread_mutex_t t_fork;
+typedef pthread_mutex_t t_mutex;
 
 typedef enum s_status
 {
@@ -37,18 +37,17 @@ typedef enum s_status
 
 typedef struct s_philo
 {
-    const char  *name;
     pthread_t   id;
+    int         name;
+    t_status    action;
     size_t      last_meal;
-    t_fork      *fork_first;
-    t_fork      *fork_second;
-    t_status    philo_action;
+    t_mutex     *fork_first;
+    t_mutex     *fork_second;
 }   t_philo;
 
 typedef struct s_context
 {
-    t_fork  lock_msg;
-    t_fork  lock_test;
+    t_mutex  lock_log;
     size_t  start_time;
     int     num_of_philo;
     int     time_to_eat;
